@@ -12,7 +12,7 @@ class Order {
         this.orderId = orderId;
         this.dishName = dishName;
         this.tablePlace = tablePlace;
-        this.seatPerson = seatPerson; 
+        this.seatPerson = seatPerson;
         this.served = false; // Initially, the order is not served
         this.canceled = false; // Initially, the order is not canceled
     }
@@ -25,9 +25,9 @@ class Order {
         return dishName;
     }
 
-    public int getTablePlace(){ return tablePlace; } 
+    public int getTablePlace(){ return tablePlace; }
 
-    public int getSeat(){ return seatPerson; } 
+    public int getSeat(){ return seatPerson; }
 
     public void setDishName(String dishName) {
         this.dishName = dishName;
@@ -97,7 +97,7 @@ public class RestaurantSimulation {
             switch (choice) {
                 case 1:
                     try{
-                        addOrder(); 
+                        addOrder();
                     }catch(Exception e){
                         System.out.println();
                     }
@@ -139,7 +139,7 @@ public class RestaurantSimulation {
     private static void addOrder() {
         System.out.println("<---------------MENU DISHES---------->");
         String menu[] = {"Grilled Liempo",
-         "Porkchop", "Ice Cream", "Latte", "Spaghetti Bilao", "Combo Meals"};
+                "Porkchop", "Ice Cream", "Latte", "Spaghetti Bilao", "Combo Meals"};
 
         for(int i = 0; i < menu.length; i++) {
             System.out.println(i + 1 +"." +menu[i]);
@@ -168,7 +168,7 @@ public class RestaurantSimulation {
         for (Order order : orderQueue) {
             if (!order.isCanceled()) {
                 System.out.println("Order ID: " + order.getOrderId() + ", Dish Name: " + order.getDishName() + ", Table Place: Table no." + order.getTablePlace()
-                + ", Seat: " + order.getSeat() + " person");
+                        + ", Seat: " + order.getSeat() + " person");
             }
         }
     }
