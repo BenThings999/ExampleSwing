@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 class Table {
@@ -23,6 +24,18 @@ class Table {
 
     public boolean isSeatOccupied(int seatNumber) {
         return seats.get(seatNumber - 1).isOccupied();
+    }
+    public static List<Table> sortTablesByAvailableSeats(List<Table> tables) {
+        tables.sort(Comparator.comparingInt(table -> {
+            int unoccupiedSeats = 0;
+            for (Seat seat : table.getSeats()) {
+                if (!seat.isOccupied()) {
+                    unoccupiedSeats++;
+                }
+            }
+            return unoccupiedSeats;
+        }));
+        return tables;
     }
 
     public void occupySeat(int seatNumber, Person person) {

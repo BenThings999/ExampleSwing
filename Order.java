@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class Order {
-    private int orderId;
+    private String orderId;
     private List<Object> items; // List to hold both Dish and Drink objects
     private boolean served;
     private boolean canceled;
@@ -11,7 +11,7 @@ class Order {
 
 
     public Order(int orderId, boolean dineIn) {
-        this.orderId = orderId;
+        this.orderId = IdGenerator.generateUniqueId("OR");;
         this.items = new ArrayList<>();
         this.served = false; // Initially, the order is not served
         this.canceled = false; // Initially, the order is not canceled
@@ -33,7 +33,7 @@ class Order {
         }
     }
 
-    public int getOrderId() {
+    public String getOrderId() {
         return orderId;
     }
 
@@ -45,6 +45,17 @@ class Order {
         items.add(item);
     }
 
+    public String getCustomerNames() {
+        StringBuilder names = new StringBuilder();
+        for (Person customer : customers) {
+            names.append(customer.getName()).append(", ");
+        }
+        // Remove the trailing comma and space
+        if (names.length() > 0) {
+            names.setLength(names.length() - 2);
+        }
+        return names.toString();
+    }
     public boolean isServed() {
         return served;
     }
