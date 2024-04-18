@@ -8,7 +8,8 @@ class Order {
     private boolean canceled;
     private boolean dineIn; // Indicates if the order is for dine-in or take-out
     private List<Person> customers;
-
+    private Seat seat;
+    private Table table; // Reference to the table this order belongs to
 
     public Order(int orderId, boolean dineIn) {
         this.orderId = IdGenerator.generateUniqueId("OR");;
@@ -17,10 +18,26 @@ class Order {
         this.canceled = false; // Initially, the order is not canceled
         this.dineIn = dineIn;
         this.customers = new ArrayList<>();
-
     }
+
     public void addCustomer(Person customer) {
         customers.add(customer);
+    }
+
+    public Table getTable() {
+        return table;
+    }
+
+    public void setTable(Table table) {
+        this.table = table;
+    }
+
+    public Seat getSeat() {
+        return seat;
+    }
+
+    public void setSeat(Seat seat) {
+        this.seat = seat;
     }
 
     public void assignSeats(Table table) {
@@ -28,6 +45,8 @@ class Order {
         for (Seat seat : table.getSeats()) {
             if (!seat.isOccupied() && customerIndex < customers.size()) {
                 table.occupySeat(seat.getSeatNumber(), customers.get(customerIndex));
+                setTable(table); // Set the table for this order
+                setSeat(seat); // Set the seat for this order
                 customerIndex++;
             }
         }
@@ -56,6 +75,7 @@ class Order {
         }
         return names.toString();
     }
+
     public boolean isServed() {
         return served;
     }
@@ -82,12 +102,25 @@ class Order {
 
     @Override
     public String toString() {
-        return "Order{" +
-                "orderId=" + orderId +
-                ", items=" + items +
-                ", served=" + served +
-                ", canceled=" + canceled +
-                ", dineIn=" + dineIn +
-                '}';
+        StringBuilder sb = new StringBuilder();
+        sb.append("Order ID: ").append(orderId).append("\n");
+        sb.append("Items:\n");
+        for (Object item : items) {
+            if (item instanceof Dish) {
+                Dish dish = (Dish) item;
+                sb.append("- Dish: ").append(dish.getName()).append(" (ID: ").append(dish.getDishId())
+                        .append(", Price: $").append(dish.getPrice()).append(", Quantity: ").append(dish.getQuantity()).append(")\n");
+            }
+            if (item instanceof Drink) {
+                Drink drink = (Drink) item;
+                sb.append("- Drink: ").append(drink.getName()).append(" (ID: ").append(drink.getDrinkId())
+                        .append(", Price: $").append(drink.getPrice()).append(", Quantity: ").append(drink.getQuantity()).append(")\n");
+            }
+        }
+        sb.append("Served: ").append(served ? "Yes" : "No").append("\n");
+        sb.append("Canceled: ").append(canceled ? "Yes" : "No").append("\n");
+        sb.append("Dine-in: ").append(dineIn ? "Yes" : "No").append("\n");
+        return sb.toString();
     }
+
 }

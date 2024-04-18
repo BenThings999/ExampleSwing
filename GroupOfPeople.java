@@ -7,7 +7,11 @@ class GroupOfPeople {
     public GroupOfPeople() {
         this.people = new ArrayList<>();
     }
-
+    public void printNames() {
+        for (Person person : people) {
+            System.out.println(person.getName());
+        }
+    }
     public void addPerson(Person person) {
         people.add(person);
     }

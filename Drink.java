@@ -5,13 +5,23 @@ class Drink {
     private String name;
     private double price;
     private boolean alcoholic;
+    private int quantity; // Add quantity field
 
     public Drink(String name, double price, boolean alcoholic) {
         this.name = name;
         this.price = price;
         this.alcoholic = alcoholic;
         this.drinkId = IdGenerator.generateUniqueId("DR"); // Generate unique Drink ID
+        this.quantity = 1; // Default quantity is 1
+    }
 
+    // Getters and setters for quantity
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 
 
