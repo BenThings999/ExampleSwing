@@ -12,6 +12,7 @@ class Table {
         for (int i = 1; i <= numberOfSeats; i++) {
             seats.add(new Seat(i));
         }
+
     }
 
     public int getTableNumber() {
