@@ -1,6 +1,3 @@
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
 
 class Person {
     private String personId;

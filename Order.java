@@ -190,6 +190,7 @@ class Order {
                     break;
                 default:
                     System.out.println("Invalid choice. Please enter a number between 1 and 7.");
+                    break;
             }
         }
     }
@@ -200,39 +201,57 @@ class Order {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Order ID: ").append(orderId).append("\n");
-        sb.append("Items:\n");
-        for (Object item : items) {
-            if (item instanceof Dish) {
-                Dish dish = (Dish) item;
-                sb.append("- Dish: ").append(dish.getName()).append(" (ID: ").append(dish.getItemId())
-                        .append(", Price: $").append(dish.getPrice()).append(", Quantity: ").append(dish.getQuantity()).append(")\n");
+        if(sb.length() == 0){
+            System.out.print("No Order ID found");
+        } else {
+            sb.append("Order ID: ").append(orderId).append("\n");
+            sb.append("Items:\n");
+            for (Object item : items) {
+                if (item instanceof Dish) {
+                    Dish dish = (Dish) item;
+                    sb.append("- Dish: ").append(dish.getName()).append(" (ID: ").append(dish.getItemId())
+                            .append(", Price: $").append(dish.getPrice()).append(", Quantity: ").append(dish.getQuantity()).append(")\n");
+                }
+                if (item instanceof Drink) {
+                    Drink drink = (Drink) item;
+                    sb.append("- Drink: ").append(drink.getName()).append(" (ID: ").append(drink.getItemId())
+                            .append(", Price: $").append(drink.getPrice()).append(", Quantity: ").append(drink.getQuantity()).append(")\n");
+                }
             }
-            if (item instanceof Drink) {
-                Drink drink = (Drink) item;
-                sb.append("- Drink: ").append(drink.getName()).append(" (ID: ").append(drink.getItemId())
-                        .append(", Price: $").append(drink.getPrice()).append(", Quantity: ").append(drink.getQuantity()).append(")\n");
-            }
-        }
+        
+    
         sb.append("Served: ").append(served ? "Yes" : "No").append("\n");
         sb.append("Canceled: ").append(canceled ? "Yes" : "No").append("\n");
         sb.append("Dine-in: ").append(dineIn ? "Yes" : "No").append("\n");
         sb.append("Total Price: $").append(calculateTotalPrice()).append("\n"); // Total price
+        }
         return sb.toString();
     }
 
     public static Order findOrderById(Queue<Order> orders) {
+
+        if(orders.isEmpty() || orders == null){
+            System.out.println("No orders found!");
+            return null;
+        } 
+
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter the order ID: ");
-        String orderId = scanner.nextLine();
-
-        for (Order order : orders) {
-            if (order.getOrderId().equals(orderId)) {
-                return order;
+        try {
+            System.out.print("Enter the order ID: ");
+            String orderId = scanner.nextLine();
+    
+            for (Order order : orders) {
+                if (order.getOrderId().equals(orderId)) {
+                    return order;
+                }
             }
+            System.out.println("Order not found!");
+        } catch (IllegalStateException e) {
+            System.out.println("Error reading input: " + e.getMessage());
+        } finally {
+            scanner.close();
         }
-
-        System.out.println("Order not found!");
+        // System.out.println("Order not found!");
         return null; // Return null if order is not found
     }
 }
