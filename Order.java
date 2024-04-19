@@ -201,9 +201,10 @@ class Order {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if(sb.length() == 0){
+        if(sb.toString().isEmpty()) {
             System.out.print("No Order ID found");
-        } else {
+            return null;
+        }
             sb.append("Order ID: ").append(orderId).append("\n");
             sb.append("Items:\n");
             for (Object item : items) {
@@ -224,7 +225,6 @@ class Order {
         sb.append("Canceled: ").append(canceled ? "Yes" : "No").append("\n");
         sb.append("Dine-in: ").append(dineIn ? "Yes" : "No").append("\n");
         sb.append("Total Price: $").append(calculateTotalPrice()).append("\n"); // Total price
-        }
         return sb.toString();
     }
 
