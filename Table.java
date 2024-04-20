@@ -12,6 +12,7 @@ class Table {
         for (int i = 1; i <= numberOfSeats; i++) {
             seats.add(new Seat(i));
         }
+
     }
 
     public int getTableNumber() {
@@ -42,6 +43,7 @@ class Table {
         seats.get(seatNumber - 1).setOccupied(true);
         seats.get(seatNumber - 1).setOccupant(person);
     }
+
 
     public void vacateSeat(int seatNumber) {
         seats.get(seatNumber - 1).setOccupied(false);

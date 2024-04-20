@@ -2,15 +2,15 @@ import java.util.*;
 
 
 public class RestaurantSimulation {
-    private static List<Table> tables = new ArrayList<>();
+    public static List<Table> tables = new ArrayList<>();
 
-    private static Queue<Person> customerQueue = new LinkedList<>();
-    private static Queue<Order> orderQueue = new LinkedList<>();
-    private static Queue<Order> servedOrders = new LinkedList<>(); // Queue for served orders
-    // private static Queue<Order> seatChoice = new LinkedList<>(); // Queue for
-    private static int orderIdCounter = 1;
-    private static List<Dish> dishes = new ArrayList<>();
-    private static List<Drink> drinks = new ArrayList<>();
+    static Queue<Person> customerQueue = new LinkedList<>();
+    public static Queue<Order> orderQueue = new LinkedList<>();
+    public static Queue<Order> servedOrders = new LinkedList<>(); // Queue for served orders
+    public static List<Order> canceledOrders = new ArrayList<>();
+
+    static List<Dish> dishes = new ArrayList<>();
+    static List<Drink> drinks = new ArrayList<>();
     private static Scanner scanner = new Scanner(System.in);
     private static Random random = new Random();
     public static void main(String[] args) {
@@ -34,67 +34,59 @@ public class RestaurantSimulation {
         boolean exit = false;
         createTables();
 
+
         while (!exit) {
             addInitialCustomers();
-            showAvailableTables();
+            printAvailableTablesAndSeats(tables);
             showListOfCustomers();
+            showAvailableTables();
             System.out.println("\n=== Restaurant Management System ===");
             System.out.println("1. Add Order");
             System.out.println("2. View Orders");
             System.out.println("3. Update Order");
-            System.out.println("4. Cancel Order");
-            System.out.println("5. Delete Order");
-            System.out.println("6. Serve Order");
-            System.out.println("7. View Served Orders");
-            System.out.println("8. View Canceled Orders");
-            System.out.println("9. Uncancel Order");
-            System.out.println("10. Exit");
+            System.out.println("4. View Served Orders");
+            System.out.println("5. View Canceled Orders");
+            System.out.println("6. Exit");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
 
             switch (choice) {
                 case 1:
-
                     try{
                         Person personQ = automaticallyGetCustomer();
                         boolean dineIn = isDineIn();
                         if(dineIn) {
-                            addPersonAndCompanions(personQ);
+                            GroupOfPeople group = addPersonAndCompanions(personQ);
                             Order order = addOrder(dishes, drinks, dineIn,personQ);
                             order.getCustomerNames();
+                            order.setGroup(group);
+                            orderQueue.add(order);
+                            assignGroup(tables,group,order);
+                            System.out.println(orderQueue);
                         }else {
-                            addOrder(dishes, drinks, dineIn,personQ);
-
+                            Order order = addOrder(dishes, drinks, dineIn,personQ);
+                            order.getCustomerNames();
+                            orderQueue.add(order);
+                            System.out.println(orderQueue);
                         }
                     }catch(Exception e){
                         System.out.println();
                     }
                     break;
                 case 2:
-                    // viewOrders();
+                    viewOrders((List<Order>) orderQueue);
                     break;
                 case 3:
-                    // updateOrder();
+                    Order order = Order.findOrderById(orderQueue);
+                    order.updateOrder(order);
                     break;
                 case 4:
-                    // cancelOrder();
+                    viewServedOrders(servedOrders);
                     break;
                 case 5:
-                    // deleteOrder();
+                    viewCanceledOrders();
                     break;
                 case 6:
-                    // markOrderAsServed();
-                    break;
-                case 7:
-                    // viewServedOrders();
-                    break;
-                case 8:
-                    // viewCanceledOrders();
-                    break;
-                case 9:
-                    // uncancelOrder();
-                    break;
-                case 10:
                     exit = true;
                     break;
                 default:
@@ -143,6 +135,10 @@ public class RestaurantSimulation {
 
 
     private static void createTables() {
+        // Create 10 tables with 6 seats each
+        for (int i = 21; i <= 30; i++) {
+            tables.add(new Table(i, 6));
+        }
         // Create 10 tables with 2 seats each
         for (int i = 11; i <= 20; i++) {
             tables.add(new Table(i, 2));
@@ -151,10 +147,7 @@ public class RestaurantSimulation {
         for (int i = 1; i <= 10; i++) {
             tables.add(new Table(i, 4));
         }
-        // Create 10 tables with 6 seats each
-        for (int i = 21; i <= 30; i++) {
-            tables.add(new Table(i, 6));
-        }
+
     }
     private static void addInitialCustomers() {
         Random random = new Random();
@@ -164,6 +157,8 @@ public class RestaurantSimulation {
             customerQueue.offer(new Person("Customer" + randomNum));
         }
     }
+
+
 
     private static void showAvailableTables() {
         // Count the number of tables with available seats of different capacities
@@ -188,6 +183,30 @@ public class RestaurantSimulation {
         }
         System.out.println(result.toString());
     }
+    public static void updateAvailableTables() {
+        // Count the number of tables with available seats of different capacities
+        int[] availableSeatsCount = new int[7]; // Assuming maximum seat capacity is 6 seats
+
+        for (Table table : tables) {
+            int availableSeats = 0;
+            for (Seat seat : table.getSeats()) {
+                if (!seat.isOccupied()) {
+                    availableSeats++;
+                }
+            }
+            availableSeatsCount[Math.min(availableSeats, 6)]++;
+        }
+
+        // Print the number of available tables with their available seats
+        StringBuilder result = new StringBuilder();
+        for (int i = 1; i <= 6; i++) {
+            if (availableSeatsCount[i] > 0) {
+                result.append(availableSeatsCount[i]).append(" Tables with ").append(i).append(" seats available | ");
+            }
+        }
+        System.out.println(result.toString());
+    }
+
 
     private static boolean isDineIn() {
         scanner.nextLine();
@@ -210,10 +229,12 @@ public class RestaurantSimulation {
             return null;
         }
     }
-    private static Order addOrder(List<Dish> dishes, List<Drink> drinks, Boolean dineIn, Person person) {
+    // Original addOrder method
+    public static Order addOrder(List<Dish> dishes, List<Drink> drinks, Boolean dineIn, Person person) {
         // Create a new order
-        Order order = new Order(orderIdCounter++, dineIn);
-        System.out.printf("Name: "+ person.getName());
+        Order order = new Order(dineIn);
+        System.out.printf("Name: %s%n", person.getName());
+
         // Add items to the order
         boolean addMoreItems = true;
         while (addMoreItems) {
@@ -231,9 +252,7 @@ public class RestaurantSimulation {
                     System.out.print("Enter the quantity: ");
                     int quantity = scanner.nextInt();
                     Dish selectedDish = dishes.get(dishIndex - 1);
-                    for (int i = 0; i < quantity; i++) {
-                        order.addItem(selectedDish);
-                    }
+                    order.addItem(selectedDish, quantity);
                     System.out.println(quantity + " " + selectedDish.getName() + " added to the order.");
                     break;
                 case 2:
@@ -243,9 +262,7 @@ public class RestaurantSimulation {
                     System.out.print("Enter the quantity: ");
                     quantity = scanner.nextInt();
                     Drink selectedDrink = drinks.get(drinkIndex - 1);
-                    for (int i = 0; i < quantity; i++) {
-                        order.addItem(selectedDrink);
-                    }
+                    order.addItem(selectedDrink, quantity);
                     System.out.println(quantity + " " + selectedDrink.getName() + " added to the order.");
                     break;
                 case 3:
@@ -258,36 +275,107 @@ public class RestaurantSimulation {
         }
 
         // Calculate total price
-        double totalPrice = calculateTotalPrice(order.getItems());
+        double totalPrice = order.calculateTotalPrice();
         System.out.println("Total price: $" + totalPrice);
 
         // Ask for the customer's money input
         System.out.print("Enter customer's money: $");
         double customerMoney = scanner.nextDouble();
-        order.addCustomer(person);
+        order.setCustomer(person);
+
         // Calculate change
         double change = customerMoney - totalPrice;
         System.out.println("Change: $" + change);
-        if (customerQueue.remove(person)) {
-            System.out.println("Customer removed from the queue after placing an order.");
-        } else {
-            System.out.println("Customer not found in the queue.");
-        }        // Return the order
+
+        // Return the order
         return order;
     }
 
-    private static double calculateTotalPrice(List<Object> items) {
+    // Overloaded addOrder method for updating an existing order
+    public static void addItemToOrder(Scanner scanner, Order order, List<Dish> dishes, List<Drink> drinks) {
+        System.out.println("Available Dishes:");
+        printDishes(dishes);
+
+        System.out.println("Available Drinks:");
+        printDrinks(drinks);
+
+        System.out.print("Enter item name: ");
+        String itemName = scanner.nextLine();
+
+        System.out.print("Enter item type (1 for Dish, 2 for Drink): ");
+        int itemType = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        System.out.print("Enter item quantity: ");
+        int quantity = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        if (itemType == 1) { // Dish
+            for (Dish dish : dishes) {
+                if (dish.getName().equalsIgnoreCase(itemName)) {
+                    order.addItem(dish, quantity);
+                    System.out.println(quantity + " " + dish.getName() + " added to the order.");
+                    return;
+                }
+            }
+            System.out.println("Dish not found!");
+        } else if (itemType == 2) { // Drink
+            for (Drink drink : drinks) {
+                if (drink.getName().equalsIgnoreCase(itemName)) {
+                    order.addItem(drink, quantity);
+                    System.out.println(quantity + " " + drink.getName() + " added to the order.");
+                    return;
+                }
+            }
+            System.out.println("Drink not found!");
+        } else {
+            System.out.println("Invalid item type.");
+        }
+    }
+
+    public static void removeItemFromOrder(Scanner scanner, Order order) {
+        System.out.println("Current Order Items:");
+        List<Item> items = order.getItems();
+        for (int i = 0; i < items.size(); i++) {
+            System.out.println((i + 1) + ". " + items.get(i).getName());
+        }
+
+        System.out.print("Enter the index of item to remove: ");
+        int indexToRemove = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        if (indexToRemove >= 1 && indexToRemove <= items.size()) {
+            Item removedItem = items.remove(indexToRemove - 1);
+            System.out.println(removedItem.getName() + " removed successfully.");
+        } else {
+            System.out.println("Invalid index.");
+        }
+    }
+
+
+
+    private static double calculateTotalPrice(List<Item> items) {
         double totalPrice = 0;
         for (Object item : items) {
             if (item instanceof Dish) {
-                totalPrice += ((Dish) item).getPrice();
+                totalPrice += calculateDishPrice((Dish) item);
             } else if (item instanceof Drink) {
-                totalPrice += ((Drink) item).getPrice();
+                totalPrice += calculateDrinkPrice((Drink) item);
             }
         }
         return totalPrice;
     }
-    private static void addPersonAndCompanions(Person person) {
+
+    private static double calculateDishPrice(Dish dish) {
+        return dish.getPrice() * dish.getQuantity();
+    }
+
+    private static double calculateDrinkPrice(Drink drink) {
+        return drink.getPrice() * drink.getQuantity();
+    }
+
+
+    public static GroupOfPeople addPersonAndCompanions(Person person) {
         Random random = new Random();
 
         // Ask how many people are with the customer
@@ -299,7 +387,6 @@ public class RestaurantSimulation {
         if (totalAvailableSeats > 1 && totalAvailableSeats < numberOfPeople) {
             System.out.println("Sorry, there are not enough seats available.");
             System.out.println("Do you still want to order for takeout?");
-            return;
         }
 
         // Create a group of people and add the initial person
@@ -313,60 +400,93 @@ public class RestaurantSimulation {
         }
 
         // Assign seats to the group
-        assignGroup(tables,group);
+        return group;
 
     }
-    public static boolean assignGroup(List<Table> tables, GroupOfPeople group) {
-        // Print the size of the customerQueue
-        System.out.println("Customer Queue Size: " + customerQueue.size());
+    public static void printAvailableTablesAndSeats(List<Table> tables) {
+        System.out.println("Available Tables and Seats:");
+        for (Table table : tables) {
+            System.out.println("Table " + table.getTableNumber() + ":");
+            for (Seat seat : table.getSeats()) {
+                if (!seat.isOccupied()) {
+                    System.out.println("  Seat " + seat.getSeatNumber() + ": Available");
+                } else {
+                    System.out.println("  Seat " + seat.getSeatNumber() + ": Occupied by " + seat.getOccupant().getName());
+                }
+            }
+        }
+    }
+    public static boolean assignGroup(List<Table> tables, GroupOfPeople group, Order order) {
         int groupSize = group.getPeople().size();
         tables = Table.sortTablesByAvailableSeats(tables);
         System.out.println(tables);
-        do {
-            for (Table table : tables) {
-                if (groupSize <= 2 && table.getSeats().size() == 2) { // If group size is 1 or 2, seat them on 2-seat tables
-                    for (Seat seat : table.getSeats()) {
-                        if (!seat.isOccupied()) {
-                            seat.setOccupied(true);
-                            seat.setOccupant(group.getPeople().remove(0));
-                            groupSize--;
-                        }
-                        if (groupSize == 0) {
-                            return true; // All members seated
-                        }
-                    }
+        for (Person person : group.getPeople()) {
+            order.addCustomer(person);
+            person.setGroup(group);
+        }
+
+        for (Table table : tables) {
+            System.out.println(groupSize + " HEHEH");
+            for (Seat seat : table.getSeats()) {
+                if (!seat.isOccupied()) {
+                    System.out.println(groupSize + " HUHUH");
+                    seat.setOccupied(true);
+                    group.getPeople().get(0).setSeat(seat);
+                    seat.setOccupant(group.getPeople().remove(0));
+                    order.setTable(table);
+                    order.setSeat(seat);
+
+
+                    groupSize--;
                 }
-                if (groupSize <= 4 && table.getSeats().size() == 4) { // If group size is 3 or 4, seat them on 4-seat tables
-                    for (Seat seat : table.getSeats()) {
-                        if (!seat.isOccupied()) {
-                            seat.setOccupied(true);
-                            seat.setOccupant(group.getPeople().remove(0));
-                            groupSize--;
-                        }
-                        if (groupSize == 0) {
-                            return true; // All members seated
-                        }
-                    }
-                }
-                if (groupSize >= 5 && table.getSeats().size() >= 6) { // If group size is 5 or more, seat them on 6-seat tables
-                    for (Seat seat : table.getSeats()) {
-                        if (!seat.isOccupied()) {
-                            seat.setOccupied(true);
-                            seat.setOccupant(group.getPeople().remove(0));
-                            groupSize--;
-                        }
-                        if (groupSize == 0) {
-                            return true; // All members seated
-                        }
-                    }
+                if (groupSize == 0) {
+                    return true; // All members seated
                 }
             }
-        }while (groupSize!=0);
-
-
-
+//            if (groupSize <= 2 && table.getSeats().size() == 2) { // If group size is 1 or 2, seat them on 2-seat tables
+//                for (Seat seat : table.getSeats()) {
+//                    if (!seat.isOccupied()) {
+//                        System.out.println(groupSize + " HUHUH");
+//                        seat.setOccupied(true);
+//                        seat.setOccupant(group.getPeople().remove(0));
+//                        order.setTable(table);
+//                        order.setSeat(seat);
+//                        groupSize--;
+//                    }
+//                    if (groupSize == 0) {
+//                        return true; // All members seated
+//                    }
+//                }
+//            }
+//            if (groupSize % 4 != 0 && table.getSeats().size() == 4) { // If group size is 3 or 4, seat them on 4-seat tables
+//                for (Seat seat : table.getSeats()) {
+//                    if (!seat.isOccupied()) {
+//                        seat.setOccupied(true);
+//                        seat.setOccupant(group.getPeople().remove(0));
+//                        order.setTable(table);
+//                        order.setSeat(seat);
+//                        groupSize--;
+//                    }
+//
+//                }
+//            }
+//            if (groupSize % 6 != 0 && table.getSeats().size() >= 6) {
+//                for (Seat seat : table.getSeats()) {
+//                    if (!seat.isOccupied()) {
+//                        seat.setOccupied(true);
+//                        seat.setOccupant(group.getPeople().remove(0));
+//                        order.setTable(table);
+//                        order.setSeat(seat);
+//                        groupSize--;
+//                    }
+//                }
+//            }
+        }
         return false; // Not enough available seats for the entire group
     }
+
+
+
     public static void sortTablesBySeats(List<Table> tables) {
         // Create a custom comparator to compare tables based on the number of seats
         Comparator<Table> comparator = new Comparator<Table>() {
@@ -386,20 +506,64 @@ public class RestaurantSimulation {
 
 
 
-//
-//    private static void viewOrders() {
-//        System.out.println("=== Orders ===");
-//        if (orderQueue.isEmpty()) {
-//            System.out.println("No orders available.");
-//            return;
-//        }
-//        for (Order order : orderQueue) {
-//            if (!order.isCanceled()) {
-//                System.out.println("Order ID: " + order.getOrderId() + ", Dish Name: " + order.getDishName() + ", Table Place: Table no." + order.getTablePlace()
-//                        + ", Seat: " + order.getSeat() + " person");
-//            }
-//        }
-//    }
+
+    private static void viewOrders(List<Order> orderQueue) {
+        for (Order order : orderQueue) {
+            if(order.isDineIn()) {
+                System.out.println("Occupied Seat: " + order.getTotalOccupiedSeats());
+            }
+            System.out.println("Items  Ordered:");
+            for (Object item : order.getItems()) {
+                if (item instanceof Dish) {
+                    Dish dish = (Dish) item;
+                    System.out.println("- Dish: " + dish.getName() + " (ID: " + dish.getItemId() + ", Price: $" + dish.getPrice() + ", Quantity: " + dish.getQuantity() + ")");
+                }
+                if (item instanceof Drink) {
+                    Drink drink = (Drink) item;
+                    System.out.println("- Drink: " + drink.getName() + " (ID: " + drink.getItemId() + ", Price: $" + drink.getPrice() + ", Quantity: " + drink.getQuantity() + ")");
+                }
+            }
+            System.out.println("Order ID: " + order.getOrderId());
+            System.out.println("Customer(s): " + order.getCustomerNames());
+            System.out.println("Total Price: " + order.getTotalPrice());
+
+            System.out.println(); // Add a blank line between orders for better readability
+        }
+    }
+    private static void viewServedOrders(Queue<Order> servedOrders) {
+        System.out.println("=== Served Orders ===");
+        if (servedOrders.isEmpty()) {
+            System.out.println("No served orders available.");
+            return;
+        }
+        for (Order order : servedOrders) {
+            System.out.println(order);
+            System.out.println(); // Add an empty line for readability
+        }
+    }
+    public static void viewCanceledOrders() {
+        System.out.println("=== Canceled Orders ===");
+        if (canceledOrders.isEmpty()) {
+            System.out.println("No canceled orders available.");
+        } else {
+            for (Order order : canceledOrders) {
+                System.out.println("Order ID: " + order.getOrderId());
+                System.out.println("Customer(s): " + order.getCustomerNames());
+                System.out.println("Canceled Items:");
+                for (Object item : order.getItems()) {
+                    if (item instanceof Dish) {
+                        Dish dish = (Dish) item;
+                        System.out.println("- Dish: " + dish.getName() + " (Price: $" + dish.getPrice() + ", Quantity: " + dish.getQuantity() + ")");
+                    } else if (item instanceof Drink) {
+                        Drink drink = (Drink) item;
+                        System.out.println("- Drink: " + drink.getName() + " (Price: $" + drink.getPrice() + ", Quantity: " + drink.getQuantity() + ")");
+                    }
+                }
+                System.out.println(); // Add a blank line between orders for better readability
+            }
+        }
+    }
+
 //
 //    private static void updateOrder() {
 //        System.out.print("Enter order ID to update: ");

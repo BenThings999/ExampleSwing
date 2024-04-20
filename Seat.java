@@ -1,6 +1,7 @@
 class Seat {
     private int seatNumber;
     private boolean occupied;
+
     private Person occupant;
 
     public Seat(int seatNumber) {
@@ -28,4 +29,5 @@ class Seat {
     public void setOccupant(Person occupant) {
         this.occupant = occupant;
     }
+
 }
