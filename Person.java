@@ -28,7 +28,7 @@ class Person {
         this.order = order;
     }
     public Seat getSeat() {
-        return seat;
+        return this.seat;
     }
 
     public void setSeat(Seat seat) {

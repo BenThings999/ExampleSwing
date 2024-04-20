@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Scanner;
+import java.util.*;
 
 class Order {
     private static Scanner scanner = new Scanner(System.in);
@@ -12,9 +9,9 @@ class Order {
     private boolean served;
     private boolean canceled;
     private boolean dineIn; // Indicates if the order is for dine-in or take-out
-    private List<Person> customers;
-    private Seat seat;
-    private Table table; // Reference to the table this order belongs to
+    public List<Person> customers;
+    public Seat seat;
+    public Table table; // Reference to the table this order belongs to
     private double totalPrice;
     private Person customer;
     private GroupOfPeople group;
@@ -176,7 +173,19 @@ class Order {
     public void setDineIn(boolean dineIn) {
         this.dineIn = dineIn;
     }
+    public void removeCustomersWithProbability(Queue<Order> servedOrders, double probability, Queue doneDiningOrders) {
+        Random random = new Random();
+        for (Order order : servedOrders) {
+            setCanceled(true);
+            if (random.nextDouble() < probability) {
 
+                doneDiningOrders.add(servedOrders);
+                System.out.println("Customer finished dining");
+            }
+        }
+
+
+    }
 
     public void updateOrder(Order order) {
 
@@ -311,4 +320,5 @@ class Order {
         System.out.println("Order not found!");
         return null; // Return null if order is not found
     }
+
 }
