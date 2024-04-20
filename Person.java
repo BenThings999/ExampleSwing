@@ -1,6 +1,3 @@
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
 
 class Person {
     private Seat seat;
@@ -28,7 +25,7 @@ class Person {
         this.order = order;
     }
     public Seat getSeat() {
-        return this.seat;
+        return seat;
     }
 
     public void setSeat(Seat seat) {
