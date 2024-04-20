@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Scanner;
+import java.util.*;
 
 class Order {
     private static Scanner scanner = new Scanner(System.in);
@@ -12,11 +9,12 @@ class Order {
     private boolean served;
     private boolean canceled;
     private boolean dineIn; // Indicates if the order is for dine-in or take-out
-    private List<Person> customers;
-    private Seat seat;
-    private Table table; // Reference to the table this order belongs to
+    public List<Person> customers;
+    public Seat seat;
+    public Table table; // Reference to the table this order belongs to
     private double totalPrice;
     private Person customer;
+    private GroupOfPeople group;
 
 
     public Order(boolean dineIn) {
@@ -43,7 +41,12 @@ class Order {
     public void addCustomer(Person customer) {
         customers.add(customer);
     }
-
+    public void setGroup(GroupOfPeople group) {
+        this.group = group;
+    }
+    public GroupOfPeople getGroup() {
+        return group;
+    }
     public Table getTable() {
         return table;
     }
@@ -73,7 +76,7 @@ class Order {
         for (Item existingItem : items) {
             if (existingItem.equals(item)) {
                 existingItem.setQuantity(existingItem.getQuantity() + quantity); // Update quantity
-                System.out.println("mahalnamah"+existingItem.getQuantity()); // (Optional debug output)
+                System.out.println(existingItem.getQuantity()); // (Optional debug output)
                 return; // No need to continue the loop
             }
         }
@@ -108,14 +111,25 @@ class Order {
 
 
     public String getCustomerNames() {
-        StringBuilder names = new StringBuilder();
+        StringBuilder names = new StringBuilder("Customer(s): "); // Add "Customer(s): "
+        int count = 0;
+
         for (Person customer : customers) {
-            names.append(customer.getName()).append(", ");
+            if (count < 5) {
+                names.append(customer.getName()).append(", ");
+            } else {
+                int remainingCustomers = customers.size() - count;
+                names.append("and ").append(remainingCustomers).append(" ").append("others    ");
+                break;
+            }
+            count++;
         }
-        // Remove the trailing comma and space
-        if (names.length() > 0) {
+
+        // Remove the trailing comma and space if any names were added
+        if (names.length() > "Customer(s): ".length()) { // Check if names exist
             names.setLength(names.length() - 2);
         }
+
         return names.toString();
     }
 
@@ -133,7 +147,24 @@ class Order {
 
     public void setCanceled(boolean canceled) {
         this.canceled = canceled;
+        if (canceled && dineIn) {
+            // If the order is canceled and it is for dine-in, remove all persons from the order
+            for ( Person customerE : this.customers){
+                customerE.getSeat().setOccupant(null);
+                customerE.getSeat().setOccupied(false);
+            }
+
+
+        }
+        if (canceled) {
+            // If the order is canceled, add it to the list of canceled orders
+            RestaurantSimulation.canceledOrders.add(this);
+
+        }
+        System.out.println("Order marked as canceled.");
     }
+
+
 
     public boolean isDineIn() {
         return dineIn;
@@ -141,6 +172,19 @@ class Order {
 
     public void setDineIn(boolean dineIn) {
         this.dineIn = dineIn;
+    }
+    public void removeCustomersWithProbability(Queue<Order> servedOrders, double probability, Queue doneDiningOrders) {
+        Random random = new Random();
+        for (Order order : servedOrders) {
+            setCanceled(true);
+            if (random.nextDouble() < probability) {
+
+                doneDiningOrders.add(servedOrders);
+                System.out.println("Customer finished dining");
+            }
+        }
+
+
     }
 
     public void updateOrder(Order order) {
@@ -163,7 +207,7 @@ class Order {
             switch (choice) {
                 case 1:
                     // Add items (Modify existing order)
-                    RestaurantSimulation.addItemToOrder(scanner,order, RestaurantSimulation.dishes, RestaurantSimulation.drinks);
+                    RestaurantSimulation.addOrder(RestaurantSimulation.dishes, RestaurantSimulation.drinks, dineIn,order.getCustomer());
                     break;
                 case 2:
                     // Remove item
@@ -173,54 +217,88 @@ class Order {
                     // Mark as served
                     setServed(true);
                     System.out.println("Order marked as served.");
+                    RestaurantSimulation.servedOrders.add(order);
                     break;
                 case 4:
                     // Mark as canceled
                     setCanceled(true);
-                    System.out.println("Order marked as canceled.");
+
                     break;
                 case 5:
                     // Update dine-in status
                     System.out.print("Is this order for dine-in? (true/false): ");
-                    boolean dineInStatus = scanner.nextBoolean();
-                    setDineIn(dineInStatus);
+                    boolean newDineInStatus = scanner.nextBoolean();
+                    System.out.println(newDineInStatus);
+                    System.out.println(this.dineIn);
+                    if (newDineInStatus != this.dineIn) {
+                        if (dineIn) {
+                            // If previous status was dine-in, mark the seat as false occupied and remove the occupants
+                            for ( Person customerE : this.customers){
+                                customerE.getSeat().setOccupant(null);
+                                customerE.getSeat().setOccupied(false);
+                            }
+
+                            System.out.println("Seat marked as occupied and occupants removed.");
+                        } else {
+                            // If previous status was not dine-in, ask for the number of customers and seat them
+
+                            GroupOfPeople group = RestaurantSimulation.addPersonAndCompanions(order.getCustomer());
+                            order.setGroup(group);
+                            RestaurantSimulation.assignGroup(RestaurantSimulation.tables,group,order);
+                        }
+                        dineIn = newDineInStatus; // Update dine-in status
+                        System.out.println("Dine-in status updated.");
+                    } else {
+                        System.out.println("Dine-in status remains unchanged.");
+                    }
                     break;
                 case 6:
                     exit = true;
                     break;
                 default:
                     System.out.println("Invalid choice. Please enter a number between 1 and 7.");
-                    break;
             }
         }
+    }
+
+    public int getTotalOccupiedSeats() {
+        int occupiedSeats = 0;
+        for (Person person : customers) {
+            if (person.getSeat() != null && person.getSeat().isOccupied()) {
+                occupiedSeats++;
+            }
+        }
+        return occupiedSeats;
     }
 
 
 
 
+    public List<Person> getCustomers() {
+        return customers;
+    }
+    public void setCustomers(GroupOfPeople group) {
+        this.customers= group.getPeople();
+    }
+
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if(sb.toString().isEmpty()) {
-            System.out.print("No Order ID found");
-            return null;
-        }
-            sb.append("Order ID: ").append(orderId).append("\n");
-            sb.append("Items:\n");
-            for (Object item : items) {
-                if (item instanceof Dish) {
-                    Dish dish = (Dish) item;
-                    sb.append("- Dish: ").append(dish.getName()).append(" (ID: ").append(dish.getItemId())
-                            .append(", Price: $").append(dish.getPrice()).append(", Quantity: ").append(dish.getQuantity()).append(")\n");
-                }
-                if (item instanceof Drink) {
-                    Drink drink = (Drink) item;
-                    sb.append("- Drink: ").append(drink.getName()).append(" (ID: ").append(drink.getItemId())
-                            .append(", Price: $").append(drink.getPrice()).append(", Quantity: ").append(drink.getQuantity()).append(")\n");
-                }
+        sb.append("Order ID: ").append(orderId).append("\n");
+        sb.append("Items:\n");
+        for (Object item : items) {
+            if (item instanceof Dish) {
+                Dish dish = (Dish) item;
+                sb.append("- Dish: ").append(dish.getName()).append(" (ID: ").append(dish.getItemId())
+                        .append(", Price: $").append(dish.getPrice()).append(", Quantity: ").append(dish.getQuantity()).append(")\n");
             }
-        
-    
+            if (item instanceof Drink) {
+                Drink drink = (Drink) item;
+                sb.append("- Drink: ").append(drink.getName()).append(" (ID: ").append(drink.getItemId())
+                        .append(", Price: $").append(drink.getPrice()).append(", Quantity: ").append(drink.getQuantity()).append(")\n");
+            }
+        }
         sb.append("Served: ").append(served ? "Yes" : "No").append("\n");
         sb.append("Canceled: ").append(canceled ? "Yes" : "No").append("\n");
         sb.append("Dine-in: ").append(dineIn ? "Yes" : "No").append("\n");
@@ -229,29 +307,18 @@ class Order {
     }
 
     public static Order findOrderById(Queue<Order> orders) {
-
-        if(orders.isEmpty() || orders == null){
-            System.out.println("No orders found!");
-            return null;
-        } 
-
         Scanner scanner = new Scanner(System.in);
-        try {
-            System.out.print("Enter the order ID: ");
-            String orderId = scanner.nextLine();
-    
-            for (Order order : orders) {
-                if (order.getOrderId().equals(orderId)) {
-                    return order;
-                }
+        System.out.print("Enter the order ID: ");
+        String orderId = scanner.nextLine();
+
+        for (Order order : orders) {
+            if (order.getOrderId().equals(orderId)) {
+                return order;
             }
-            System.out.println("Order not found!");
-        } catch (IllegalStateException e) {
-            System.out.println("Error reading input: " + e.getMessage());
-        } finally {
-            scanner.close();
         }
-        // System.out.println("Order not found!");
+
+        System.out.println("Order not found!");
         return null; // Return null if order is not found
     }
+
 }

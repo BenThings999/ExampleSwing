@@ -44,6 +44,7 @@ class Table {
         seats.get(seatNumber - 1).setOccupant(person);
     }
 
+
     public void vacateSeat(int seatNumber) {
         seats.get(seatNumber - 1).setOccupied(false);
         seats.get(seatNumber - 1).setOccupant(null);
