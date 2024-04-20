@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.regex.Pattern;
 
 
 public class RestaurantSimulation {
@@ -13,6 +14,7 @@ public class RestaurantSimulation {
     static List<Drink> drinks = new ArrayList<>();
     private static Scanner scanner = new Scanner(System.in);
     private static Random random = new Random();
+    static int choice;
     public static void main(String[] args) {
         // Creating a list of dishes
 
