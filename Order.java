@@ -215,14 +215,23 @@ class Order {
                     break;
                 case 3:
                     // Mark as served
-                    setServed(true);
-                    System.out.println("Order marked as served.");
-                    RestaurantSimulation.servedOrders.add(order);
+                    if(!this.isServed()) {
+                        setServed(true);
+                        System.out.println("Order marked as served.");
+                        RestaurantSimulation.servedOrders.add(order);
+                    }else {
+                        System.out.println("This is already served");
+                    }
                     break;
                 case 4:
                     // Mark as canceled
-                    setCanceled(true);
+                    if(!this.isServed()) {
+                        setCanceled(true);
+                        System.out.println("Order marked as cancelled.");
+                    }else {
+                        System.out.println("Order already cancelled.");
 
+                    }
                     break;
                 case 5:
                     // Update dine-in status
@@ -286,6 +295,7 @@ class Order {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Order ID: ").append(orderId).append("\n");
+        sb.append("Number of People: ").append(customers.size()).append("\n");
         sb.append("Items:\n");
         for (Object item : items) {
             if (item instanceof Dish) {
@@ -303,6 +313,7 @@ class Order {
         sb.append("Canceled: ").append(canceled ? "Yes" : "No").append("\n");
         sb.append("Dine-in: ").append(dineIn ? "Yes" : "No").append("\n");
         sb.append("Total Price: $").append(calculateTotalPrice()).append("\n"); // Total price
+
         return sb.toString();
     }
 
