@@ -111,7 +111,7 @@ class Order {
 
 
     public String getCustomerNames() {
-        StringBuilder names = new StringBuilder("Customer(s): "); // Add "Customer(s): "
+        StringBuilder names = new StringBuilder("Customer(s): ");
         int count = 0;
 
         for (Person customer : customers) {
@@ -211,6 +211,7 @@ class Order {
                     break;
                 case 2:
                     // Remove item
+
                     RestaurantSimulation.removeItemFromOrder(scanner,order);
                     break;
                 case 3:
@@ -225,40 +226,45 @@ class Order {
                     break;
                 case 4:
                     // Mark as canceled
-                    if(!this.isServed()) {
+                    if(!this.isServed()&& !this.canceled) {
                         setCanceled(true);
                         System.out.println("Order marked as cancelled.");
+                    }else if(this.isServed()) {
+                        System.out.println("Order already served.");
                     }else {
-                        System.out.println("Order already cancelled.");
-
+                        System.out.println("Order already marked as cancelled.");
                     }
                     break;
                 case 5:
                     // Update dine-in status
-                    System.out.print("Is this order for dine-in? (true/false): ");
-                    boolean newDineInStatus = scanner.nextBoolean();
-                    System.out.println(newDineInStatus);
-                    System.out.println(this.dineIn);
-                    if (newDineInStatus != this.dineIn) {
-                        if (dineIn) {
-                            // If previous status was dine-in, mark the seat as false occupied and remove the occupants
-                            for ( Person customerE : this.customers){
-                                customerE.getSeat().setOccupant(null);
-                                customerE.getSeat().setOccupied(false);
+                    if(!this.isServed()) {
+                        System.out.print("Is this order for dine-in? (true/false): ");
+                        boolean newDineInStatus = scanner.nextBoolean();
+                        System.out.println(newDineInStatus);
+                        System.out.println(this.dineIn);
+                        if (newDineInStatus != this.dineIn) {
+                            if (dineIn) {
+                                // If previous status was dine-in, mark the seat as false occupied and remove the occupants
+                                for (Person customerE : this.customers) {
+                                    customerE.getSeat().setOccupant(null);
+                                    customerE.getSeat().setOccupied(false);
+                                }
+
+                                System.out.println("Seat marked as occupied and occupants removed.");
+                            } else {
+                                // If previous status was not dine-in, ask for the number of customers and seat them
+
+                                GroupOfPeople group = RestaurantSimulation.addPersonAndCompanions(order.getCustomer());
+                                order.setGroup(group);
+                                RestaurantSimulation.assignGroup(RestaurantSimulation.tables, group, order);
                             }
-
-                            System.out.println("Seat marked as occupied and occupants removed.");
+                            dineIn = newDineInStatus; // Update dine-in status
+                            System.out.println("Dine-in status updated.");
                         } else {
-                            // If previous status was not dine-in, ask for the number of customers and seat them
-
-                            GroupOfPeople group = RestaurantSimulation.addPersonAndCompanions(order.getCustomer());
-                            order.setGroup(group);
-                            RestaurantSimulation.assignGroup(RestaurantSimulation.tables,group,order);
+                            System.out.println("Dine-in status remains unchanged.");
                         }
-                        dineIn = newDineInStatus; // Update dine-in status
-                        System.out.println("Dine-in status updated.");
-                    } else {
-                        System.out.println("Dine-in status remains unchanged.");
+                    }else {
+                        System.out.println("Order Already served.");
                     }
                     break;
                 case 6:
